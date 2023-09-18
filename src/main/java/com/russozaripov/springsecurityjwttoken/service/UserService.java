@@ -1,16 +1,16 @@
 package com.russozaripov.springsecurityjwttoken.service;
 
 
+import com.russozaripov.springsecurityjwttoken.DTO.RegistrationUserDTO;
 import com.russozaripov.springsecurityjwttoken.entity.User;
 import com.russozaripov.springsecurityjwttoken.repository.RoleRepo;
 import com.russozaripov.springsecurityjwttoken.repository.UserRepo;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +24,8 @@ public class UserService implements UserDetailsService {
     private UserRepo userRepo;
     @Autowired
     private RoleRepo roleRepo;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     public Optional<User> findUserByUserName(String username){
         System.out.println("findUserByUserByUserName");
@@ -44,8 +46,14 @@ public class UserService implements UserDetailsService {
                 .collect(Collectors.toList())
         );
     }
-    public void createNewUser(User user){
+    public User createNewUser(RegistrationUserDTO registrationUserDTO){
+        String passwordBcrypt = passwordEncoder.encode(registrationUserDTO.getPassword()); // шифруем пароль
+        User user = User.builder()
+                .username(registrationUserDTO.getUsername())
+                .email(registrationUserDTO.getEmail())
+                .password(passwordBcrypt)
+                .build();
         user.setRoles(List.of(roleRepo.findRolesByName("ROLE_USER").get()));
-        userRepo.save(user);
+        return userRepo.save(user);
     }
 }
